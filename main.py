@@ -4,16 +4,19 @@ import pymunk.pygame_util
 import math
 
 pygame.init()
+info = pygame.display.Info()
+WIDTH, HEIGHT = info.current_w, info.current_h
+window = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 
-WIDTH, HEIGHT = 1000, 800
-window = pygame.display.set_mode((WIDTH, HEIGHT))
 
+def draw(space, window, draw_options, line, font, text_surface):
+    window.fill((223, 184, 243))
 
-def draw(space, window, draw_options, line):
-    window.fill('white')
+    text_width, text_height = text_surface.get_size()
+    window.blit(text_surface, ((WIDTH - text_width) // 2, 50))
 
     if line:
-        pygame.draw.line(window, 'black', line[0], line[1], 3)
+        pygame.draw.line(window, (21, 23, 25), line[0], line[1], 3)
 
     space.debug_draw(draw_options)
 
@@ -30,10 +33,10 @@ def calculate_angle(p1, p2):
 
 def create_boundaries(space, width, height):
     rects = [
-        [(width / 2, height - 10), (width, 20)],
-        [(width / 2, 10), (width, 20)],
-        [(10, height / 2), (20, height)],
-        [(width - 10, height / 2), (20, height)],
+        [(width / 2, height), (width, 0)],
+        [(width / 2, 0), (width, 0)],
+        [(0, height / 2), (0, height)],
+        [(width, height / 2), (0, height)],
     ]
 
     for pos, size in rects:
@@ -48,12 +51,12 @@ def create_boundaries(space, width, height):
 
 
 def create_structure(space, width, height):
-    BROWN = (139, 69, 19, 100)
+    COLOR = (255, 117, 20, 100)
 
     rects = [
-        [(600, height - 120), (40, 200), BROWN, 100],
-        [(900, height - 120), (40, 200), BROWN, 100],
-        [(750, height - 240), (340, 40), BROWN, 150],
+        [(600, height - 120), (40, 200), COLOR, 100],
+        [(900, height - 120), (40, 200), COLOR, 100],
+        [(750, height - 240), (340, 40), COLOR, 150]
     ]
 
     for pos, size, color, mass in rects:
@@ -71,10 +74,10 @@ def create_structure(space, width, height):
 
 def create_pendulum(space):
     rotation_center_body = pymunk.Body(body_type=pymunk.Body.STATIC)
-    rotation_center_body.position = (300, 300)
+    rotation_center_body.position = (1000, 200)
 
     body = pymunk.Body()
-    body.position = (300, 300)
+    body.position = (1000, 300)
 
     line = pymunk.Segment(body, (0, 0), (255, 0), 5)
     circle = pymunk.Circle(body, 40, (255, 0))
@@ -98,7 +101,7 @@ def create_ball(space, radius, mass, pos):
     shape.mass = mass
     shape.elasticity = 0.9
     shape.friction = 0.4
-    shape.color = (255, 0, 0, 100)
+    shape.color = (255, 43, 43, 100)
 
     space.add(body, shape)
 
@@ -108,7 +111,7 @@ def create_ball(space, radius, mass, pos):
 def run(window, width, height):
     running = True
     clock = pygame.time.Clock()
-    fps = 60
+    fps = 240
     dt = 1 / fps
 
     space = pymunk.Space()
@@ -122,6 +125,13 @@ def run(window, width, height):
 
     pressed_pos = None
     ball = None
+
+    font = pygame.font.Font(None, 40)
+    text_surface = font.render(
+        'Click to place a ball. '
+        'Drag to apply the force. '
+        'Click again to delete the ball.',
+        True, 'white')
 
     while running:
         line = None
@@ -151,7 +161,7 @@ def run(window, width, height):
                     space.remove(ball, ball.body)
                     ball = None
 
-        draw(space, window, draw_options, line)
+        draw(space, window, draw_options, line, font, text_surface)
         space.step(dt)
         clock.tick(fps)
 
