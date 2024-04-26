@@ -10,13 +10,13 @@ window = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 
 
 def draw(space, window, draw_options, line, font, text_surface):
-    window.fill((223, 184, 243))
+    window.fill('#DFB8F2')
 
     text_width, text_height = text_surface.get_size()
     window.blit(text_surface, ((WIDTH - text_width) // 2, 50))
 
     if line:
-        pygame.draw.line(window, (21, 23, 25), line[0], line[1], 3)
+        pygame.draw.line(window, (96, 62, 115, 45), line[0], line[1], 3)
 
     space.debug_draw(draw_options)
 
@@ -51,7 +51,7 @@ def create_boundaries(space, width, height):
 
 
 def create_structure(space, width, height):
-    COLOR = (255, 117, 20, 100)
+    COLOR = (11, 154, 157, 62)
 
     rects = [
         [(600, height - 120), (40, 200), COLOR, 100],
@@ -63,7 +63,7 @@ def create_structure(space, width, height):
         body = pymunk.Body()
         body.position = pos
 
-        shape = pymunk.Poly.create_box(body, size, radius=1)
+        shape = pymunk.Poly.create_box(body, size)
         shape.color = color
         shape.mass = mass
         shape.elasticity = 0.4
@@ -80,7 +80,9 @@ def create_pendulum(space):
     body.position = (1000, 300)
 
     line = pymunk.Segment(body, (0, 0), (255, 0), 5)
+    line.color = (229, 242, 184, 95)
     circle = pymunk.Circle(body, 40, (255, 0))
+    circle.color = (229, 242, 184, 95)
 
     line.friction = 1
     circle.friction = 1
@@ -93,6 +95,18 @@ def create_pendulum(space):
     space.add(circle, line, body, rotation_center_joint)
 
 
+def create_static_ball(space):
+    body = pymunk.Body(1, 100, body_type=pymunk.Body.STATIC)
+    body.position = (300, 300)
+
+    shape = pymunk.Circle(body, 50)
+    shape.elasticity = 0.2
+    shape.friction = 2
+    shape.color = (157, 130, 111, 62)
+
+    space.add(body, shape)
+
+
 def create_ball(space, radius, mass, pos):
     body = pymunk.Body(body_type=pymunk.Body.STATIC)
     body.position = pos
@@ -101,7 +115,7 @@ def create_ball(space, radius, mass, pos):
     shape.mass = mass
     shape.elasticity = 0.9
     shape.friction = 0.4
-    shape.color = (255, 43, 43, 100)
+    shape.color = (180, 239, 242, 95)
 
     space.add(body, shape)
 
@@ -120,18 +134,21 @@ def run(window, width, height):
     create_boundaries(space, width, height)
     create_structure(space, width, height)
     create_pendulum(space)
+    create_static_ball(space)
 
     draw_options = pymunk.pygame_util.DrawOptions(window)
 
     pressed_pos = None
     ball = None
+    simulate = True
 
-    font = pygame.font.Font(None, 40)
+    font = pygame.font.Font(None, 36)
     text_surface = font.render(
         'Click to place a ball. '
         'Drag to apply the force. '
-        'Click again to delete the ball.',
-        True, 'white')
+        'Click to launch the ball. '
+        'Click again to delete the ball. [Space] to pause. [Q] ot quit.',
+        True, '#613E73')
 
     while running:
         line = None
@@ -161,8 +178,17 @@ def run(window, width, height):
                     space.remove(ball, ball.body)
                     ball = None
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    running = False
+                    break
+
+                if event.key == pygame.K_SPACE:
+                    simulate = not simulate
+
         draw(space, window, draw_options, line, font, text_surface)
-        space.step(dt)
+        if simulate:
+            space.step(dt)
         clock.tick(fps)
 
     pygame.quit()
